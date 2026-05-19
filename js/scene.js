@@ -171,6 +171,35 @@ export class Scene {
       ctx.beginPath(); ctx.arc(f.x, f.y, r, 0, 2*Math.PI); ctx.stroke();
       if (f.t > 0.6) this.flashes.splice(i, 1);
     }
+
+    // Оверлей: победа / тайм-аут (когда раунд завершён)
+    if (!round.active && round.startTime > 0){
+      const total = ((round.stopTime - round.startTime) + round.penaltyMs) / 1000;
+      let title = '', sub = '', color = '#3fe07a';
+      if (round.winner){
+        title = '🏆 ПОБЕДА';
+        sub = `Время ${total.toFixed(1)} с (штраф ${(round.penaltyMs/1000).toFixed(0)} с)`;
+      } else if (round.timedOut){
+        title = '⏰ ТАЙМ-АУТ';
+        sub = 'Превышены регламентные 3 минуты';
+        color = '#ff5c5c';
+      } else {
+        // обычный «стоп» — не рисуем баннер, чтобы не мешать
+        return;
+      }
+      ctx.fillStyle = 'rgba(5,9,15,0.78)';
+      ctx.fillRect(W*0.18, H*0.36, W*0.64, H*0.28);
+      ctx.strokeStyle = color; ctx.lineWidth = 2;
+      ctx.strokeRect(W*0.18, H*0.36, W*0.64, H*0.28);
+      ctx.fillStyle = color;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = 'bold 34px ui-monospace,monospace';
+      ctx.fillText(title, W/2, H*0.46);
+      ctx.fillStyle = '#d6e1ec';
+      ctx.font = '14px ui-monospace,monospace';
+      ctx.fillText(sub, W/2, H*0.55);
+      ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    }
   }
 
   drawAntennaPair(x1,y1,x2,y2,label){

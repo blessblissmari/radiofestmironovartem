@@ -124,6 +124,10 @@ function tick(){
 
   scene.draw();
   refreshJudgePanel();
+  // Регламент: если идёт раунд и истекло 3 минуты — судья останавливает.
+  if (simulator.checkTimeout()){
+    $('#declared-status').textContent = '⏰ Тайм-аут 3 мин — раунд остановлен.';
+  }
   requestAnimationFrame(tick);
 }
 requestAnimationFrame(tick);
