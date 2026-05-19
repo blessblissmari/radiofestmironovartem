@@ -1,0 +1,50 @@
+name: E2E tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: tests/package-lock.json
+
+      - name: Установить системные зависимости Chrome (для Puppeteer)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 \
+            libxkbcommon0 libxcomposite1 libxdamage1 libxrandr2 \
+            libgbm1 libpango-1.0-0 libcairo2 libasound2t64 \
+            libxshmfence1 libgtk-3-0
+
+      - name: npm ci
+        working-directory: tests
+        run: npm ci
+
+      - name: E2E (Puppeteer headless)
+        working-directory: tests
+        env:
+          PUPPETEER_DOWNLOAD_PATH: ${{ github.workspace }}/.cache/puppeteer
+        run: |
+          npx puppeteer browsers install chrome
+          node e2e.spec.mjs
+
+      - name: Артефакты при падении (скриншоты, если есть)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: snapshots
+          path: tests/snap_*.png
+          if-no-files-found: ignore

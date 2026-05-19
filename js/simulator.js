@@ -97,7 +97,7 @@ export class Simulator {
     this.round = {
       active:true, startTime:performance.now(), stopTime:0,
       penaltyMs:0, ammo:3, declaredTarget:null, declaredAt:null,
-      hits:new Set(), winner:false,
+      hits:new Set(), winner:false, timedOut:false,
     };
     return { code:this.judgeCode };
   }
@@ -171,6 +171,19 @@ export class Simulator {
     if (!this.round.active && this.round.stopTime === 0) return 0;
     const end = this.round.active ? performance.now() : this.round.stopTime;
     return end - this.round.startTime;
+  }
+  /** Регламентный лимит раунда — 3 минуты. Возвращает true, если только что
+   *  отстреляли таймаут (переключили round.active в false). Внешний код опрашивает
+   *  это в каждом кадре, чтобы корректно остановить отсчёт. */
+  checkTimeout(){
+    if (!this.round.active) return false;
+    const limitMs = 3 * 60 * 1000;
+    if (this.elapsedMs() >= limitMs){
+      this.round.timedOut = true;
+      this.stopRound();
+      return true;
+    }
+    return false;
   }
   totalSec(){
     return (this.elapsedMs() + this.round.penaltyMs) / 1000;

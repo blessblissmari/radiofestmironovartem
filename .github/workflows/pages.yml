@@ -15,22 +15,44 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
+        with:
+          # Автоматически включает GitHub Pages, если он ещё не включён,
+          # и переключает его на источник «GitHub Actions». Без этого первый
+          # деплой падает с "Get Pages site failed: Not Found".
+          enablement: true
+
+      - name: Stage site (без тестов и метаданных)
+        run: |
+          mkdir -p _site
+          rsync -a --delete \
+            --exclude='_site' \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='tests' \
+            --exclude='node_modules' \
+            --exclude='.gitignore' \
+            ./ _site/
+          ls -la _site
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: '_site'
 
+  deploy:
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
