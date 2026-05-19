@@ -1,0 +1,145 @@
+/* Радиофест — стенд «Мишени». Тёмная тема, радиолокаторный стиль. */
+:root{
+  --bg:#0a0f14;
+  --bg2:#0f1720;
+  --panel:#101820;
+  --panel-2:#142030;
+  --line:#1f2d40;
+  --fg:#d6e1ec;
+  --fg-dim:#7d8ea0;
+  --green:#3fe07a;
+  --green-dim:#1a7b3a;
+  --amber:#f6c453;
+  --red:#ff5c5c;
+  --blue:#5cb8ff;
+  --violet:#b48bff;
+  --mono: ui-monospace,'JetBrains Mono','Cascadia Code',Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:radial-gradient(circle at 30% -10%, #122033, var(--bg) 60%);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100%}
+a{color:var(--blue)}
+code,pre{font-family:var(--mono)}
+
+/* topbar */
+.topbar{
+  display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;
+  padding:12px 20px;border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,#0d1623,#0a1018);
+  position:sticky;top:0;z-index:10;
+}
+.brand{display:flex;align-items:center;gap:14px}
+.brand h1{margin:0;font-size:18px;letter-spacing:.4px}
+.brand small{color:var(--fg-dim)}
+.logo{
+  font-size:34px;color:var(--green);text-shadow:0 0 18px var(--green-dim);
+  animation:pulse 2.4s infinite;
+}
+@keyframes pulse{ 0%,100%{opacity:.9} 50%{opacity:.45} }
+
+.judge-bar{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.judge-info,.judge-timer,.judge-actions{display:flex;gap:8px;align-items:center}
+.label{color:var(--fg-dim);font-size:12px;text-transform:uppercase;letter-spacing:.6px}
+.code-pill{
+  background:#000;border:1px solid var(--green);color:var(--green);
+  padding:4px 10px;border-radius:6px;font-size:15px;font-weight:700;
+  letter-spacing:1px;box-shadow:inset 0 0 10px rgba(63,224,122,.2);
+  min-width:110px;text-align:center;display:inline-block;
+}
+.timer{font-family:var(--mono);font-size:18px;color:var(--amber);min-width:72px;display:inline-block;text-align:right}
+.timer.total{color:var(--red);font-weight:700}
+
+.btn{
+  background:#172738;color:var(--fg);border:1px solid var(--line);
+  padding:7px 14px;border-radius:6px;cursor:pointer;font:inherit;font-size:13px;
+  transition:.15s;
+}
+.btn:hover{background:#22344b;border-color:#34527a}
+.btn.primary{background:linear-gradient(180deg,#1f6b3a,#11532a);border-color:#2c8a4d;color:#dcffe6}
+.btn.primary:hover{background:linear-gradient(180deg,#26824a,#136033)}
+.btn.warn{background:linear-gradient(180deg,#a8451c,#7a2f10);border-color:#cf5e29;color:#ffe6d6}
+.btn.warn:hover{background:linear-gradient(180deg,#c25223,#8b3613)}
+.btn.small{padding:4px 8px;font-size:12px}
+
+/* layout */
+.layout{
+  display:grid;
+  grid-template-columns: 1.2fr 1fr;
+  grid-template-rows: auto auto;
+  gap:14px;padding:14px;
+}
+.panel{
+  background:linear-gradient(180deg,var(--panel),var(--panel-2));
+  border:1px solid var(--line);border-radius:10px;padding:14px;
+  box-shadow:0 4px 22px rgba(0,0,0,.35);
+}
+.panel h2{margin:0 0 10px 0;font-size:14px;letter-spacing:.5px;color:var(--fg-dim);text-transform:uppercase}
+.panel h3{margin:8px 0;color:var(--fg)}
+
+.scene-panel  { grid-column:1; grid-row:1; }
+.sdr-panel    { grid-column:2; grid-row:1; }
+.python-panel { grid-column:1; grid-row:2; }
+.docs-panel   { grid-column:2; grid-row:2; }
+
+@media (max-width:1100px){
+  .layout{grid-template-columns:1fr}
+  .scene-panel,.sdr-panel,.python-panel,.docs-panel{grid-column:1;grid-row:auto}
+}
+
+/* scene */
+canvas{
+  width:100%;height:auto;display:block;
+  background:#05090f;border:1px solid var(--line);border-radius:8px;
+  image-rendering:pixelated;
+}
+.scene-controls{display:flex;flex-wrap:wrap;gap:14px;justify-content:space-between;margin-top:10px}
+.scene-controls > div{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ammo{font-family:var(--mono);color:var(--amber);font-weight:700;font-size:18px;min-width:24px;text-align:center}
+input,select,textarea{
+  background:#0b121a;color:var(--fg);border:1px solid var(--line);border-radius:5px;
+  padding:5px 8px;font:inherit;font-size:13px;
+}
+input[type=range]{padding:0}
+.hint{color:var(--fg-dim);font-size:12px}
+
+/* sdr */
+.sdr-tabs,.tabs-row{display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap}
+.tab,.docs-tab{
+  background:transparent;border:1px solid var(--line);border-bottom:none;color:var(--fg-dim);
+  padding:6px 10px;border-top-left-radius:6px;border-top-right-radius:6px;cursor:pointer;font-size:12px;
+}
+.tab.active,.docs-tab.active{background:var(--panel-2);color:var(--green);border-color:var(--green-dim)}
+.sdr-controls{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px;font-size:12px;color:var(--fg-dim)}
+.sdr-controls label{display:flex;gap:6px;align-items:center}
+.sdr-controls input,.sdr-controls select{font-size:12px}
+.sdr-views canvas{height:240px}
+.decoded{margin-top:10px;font-size:14px;display:flex;align-items:center;gap:10px}
+#decoded-code{
+  background:#000;border:1px solid var(--green);color:var(--green);padding:3px 10px;
+  border-radius:5px;font-weight:700;letter-spacing:2px;
+}
+
+/* python */
+#editor{
+  width:100%;height:240px;font-family:var(--mono);font-size:13px;
+  background:#070b10;color:#e8eef5;border:1px solid var(--line);border-radius:6px;padding:10px;
+  resize:vertical;tab-size:4;
+}
+.py-actions{display:flex;gap:8px;margin:8px 0;align-items:center;flex-wrap:wrap}
+#py-output{
+  background:#000;color:#caf3d8;font-family:var(--mono);font-size:12px;
+  white-space:pre-wrap;border:1px solid var(--line);border-radius:6px;
+  padding:10px;height:200px;overflow:auto;margin:0;
+}
+#py-loading{color:var(--amber);padding:30px;text-align:center;font-style:italic}
+
+/* docs */
+.docs-pane{display:none;font-size:13px;line-height:1.55}
+.docs-pane.active{display:block}
+.docs-pane pre{background:#070b10;border:1px solid var(--line);padding:10px;border-radius:6px;overflow:auto}
+.docs-pane code{background:#070b10;padding:1px 5px;border-radius:3px}
+.muted{color:var(--fg-dim);font-style:italic}
+
+footer{
+  text-align:center;padding:18px;color:var(--fg-dim);font-size:12px;
+  border-top:1px solid var(--line);margin-top:8px;
+}

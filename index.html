@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Радиофест-2025 — Стенд «Мишени»</title>
+<link rel="stylesheet" href="styles/main.css">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">◉</span>
+    <div>
+      <h1>РАДИОФЕСТ — Песочница «Мишени»</h1>
+      <small>Тренировочный стенд по номинации «Радионавигация» · НИУ МИЭТ</small>
+    </div>
+  </div>
+  <div class="judge-bar">
+    <div class="judge-info">
+      <span class="label">Код мишени от судьи:</span>
+      <code id="judge-code" class="code-pill">—</code>
+    </div>
+    <div class="judge-timer">
+      <span class="label">Время</span>
+      <span id="timer" class="timer">00:00.0</span>
+      <span class="label">+штраф</span>
+      <span id="penalty" class="timer">00:00.0</span>
+      <span class="label">=итог</span>
+      <span id="total-time" class="timer total">00:00.0</span>
+    </div>
+    <div class="judge-actions">
+      <button id="btn-start" class="btn primary">▶ Старт раунда</button>
+      <button id="btn-stop"  class="btn">■ Стоп</button>
+      <button id="btn-reset" class="btn">⟲ Сброс</button>
+    </div>
+  </div>
+</header>
+
+<main class="layout">
+
+  <section class="panel scene-panel">
+    <h2>① Сцена / Полигон</h2>
+    <canvas id="scene" width="800" height="450"></canvas>
+    <div class="scene-controls">
+      <div>
+        <span class="label">Прицел → мишень №</span>
+        <select id="aim-select"></select>
+        <button id="btn-fire" class="btn warn">🚀 ОГОНЬ</button>
+        <span class="label">снарядов:</span>
+        <span id="ammo" class="ammo">3</span>
+        <button id="btn-resupply" class="btn small">+2 (+10 с)</button>
+      </div>
+      <div>
+        <span class="label">Заявить судье №:</span>
+        <input id="declare-input" type="number" min="1" max="9" value="1">
+        <button id="btn-declare" class="btn small">Объявить</button>
+        <span id="declared-status" class="hint"></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel sdr-panel">
+    <h2>② Эфир / SDR — LimeSDR (мок)</h2>
+    <div class="sdr-tabs">
+      <button class="tab active" data-tab="spectrum">Спектр</button>
+      <button class="tab" data-tab="waterfall">Водопад</button>
+      <button class="tab" data-tab="iq">I/Q + Constellation</button>
+      <button class="tab" data-tab="phase">Фазометр (DF)</button>
+    </div>
+    <div class="sdr-controls">
+      <label>SDR:
+        <select id="sdr-select">
+          <option value="0">SDR-X (азимут)</option>
+          <option value="1">SDR-Y (угол места)</option>
+        </select>
+      </label>
+      <label>Антенна:
+        <select id="ant-select">
+          <option value="0">Ant 0 (−)</option>
+          <option value="1">Ant 1 (+)</option>
+        </select>
+      </label>
+      <label>Fc, ГГц:
+        <input id="freq-input" type="number" step="0.1" value="2.6">
+      </label>
+      <label>Fs, кГц:
+        <input id="rate-input" type="number" step="50" value="200">
+      </label>
+      <label>Усиление LNA, дБ:
+        <input id="gain-input" type="range" min="0" max="30" value="20">
+        <span id="gain-val">20</span>
+      </label>
+    </div>
+    <div class="sdr-views">
+      <canvas id="spectrum"  width="800" height="240"></canvas>
+      <canvas id="waterfall" width="800" height="240" hidden></canvas>
+      <canvas id="iq"        width="800" height="240" hidden></canvas>
+      <canvas id="phase"     width="800" height="240" hidden></canvas>
+    </div>
+    <div class="decoded">
+      <span class="label">Live-декодер AM/OOK (текущий передатчик):</span>
+      <code id="decoded-code">…</code>
+    </div>
+  </section>
+
+  <section class="panel python-panel">
+    <h2>③ Python REPL — Pyodide + SoapySDR (мок)</h2>
+    <div id="py-loading">Загружаю Pyodide и numpy… (~5–10 с при первом запуске)</div>
+    <div id="py-area" hidden>
+      <textarea id="editor" spellcheck="false"></textarea>
+      <div class="py-actions">
+        <button id="btn-run" class="btn primary">▶ Запустить (Ctrl+Enter)</button>
+        <select id="py-examples">
+          <option value="">— Загрузить пример —</option>
+          <option value="hello">01 · Hello SDR (init device)</option>
+          <option value="capture">02 · Захват буфера и спектр</option>
+          <option value="ook">03 · Демодуляция AM/OOK</option>
+          <option value="df">04 · Пеленг (фазовый интерферометр)</option>
+          <option value="full">05 · Полное решение задачи</option>
+        </select>
+        <button id="btn-clear" class="btn small">Очистить вывод</button>
+      </div>
+      <pre id="py-output"></pre>
+    </div>
+  </section>
+
+  <section class="panel docs-panel">
+    <h2>④ Брифинг / Подсказки / API / Источники</h2>
+    <div class="tabs-row">
+      <button class="docs-tab active" data-tab="brief">Брифинг</button>
+      <button class="docs-tab" data-tab="hint">Подсказки</button>
+      <button class="docs-tab" data-tab="api">API SoapySDR</button>
+      <button class="docs-tab" data-tab="src">Источники</button>
+    </div>
+
+    <div class="docs-pane active" data-pane="brief">
+      <h3>Задача (Радиофест-2025, «Радионавигация»)</h3>
+      <p>На стене расположено <b>9 мишеней (сетка 3 × 3)</b>. Каждая по очереди излучает 8-символьное
+      сообщение (первый символ — <code>~</code>), AM-OOK, длительность импульса <b>250 мкс</b>,
+      несущая <b>2,6 ГГц</b>.</p>
+      <p>Судья называет команде <i>один</i> из 9 кодов. Команда обязана:</p>
+      <ol>
+        <li>Принять эфир двумя SDR (X — антенны разнесены по азимуту, Y — по углу места).</li>
+        <li>Определить, какая из мишеней передаёт заданный код, по фазовой разности.</li>
+        <li>Объявить номер судье.</li>
+        <li>Поразить эту мишень из танка.</li>
+      </ol>
+      <p>Штрафы: ошибочный номер +60 с, доп. боеприпасы +10 с за пару, всего 3 минуты на раунд.</p>
+    </div>
+
+    <div class="docs-pane" data-pane="hint">
+      <h3>Физика и алгоритм</h3>
+      <ul>
+        <li>λ = c/f ≈ <b>0,1154 м</b> при 2,6 ГГц.</li>
+        <li>Антенны разнесены на <b>d = 5 см</b>, поэтому ±π·sin(θ)·d/λ ⇒ Δφ ∈ ≈ ±π·0,43·sin(θ).</li>
+        <li>Стена 1,5 × 1,0 м, удаление 2,5 м. Колонки → азимут ≈ 0°, ±17°. Строки → угол места 0°, ±11°.</li>
+        <li>OOK-демодуляция: <code>env(t) = |I + jQ|</code>, порог = (max+min)/2, по 250 мкс на бит.</li>
+        <li>Пеленг (фазовый интерферометр): <code>Δφ = ∠(s₁ · s₀*)</code>, усреднять по битам где env=1.</li>
+        <li>Грид: после Δφ_x → азимут → колонка (0/1/2 ↔ −/0/+), Δφ_y → угол места → строка.</li>
+        <li>Номер мишени: <code>row · 3 + col + 1</code> (нумерация слева-направо, сверху-вниз).</li>
+      </ul>
+    </div>
+
+    <div class="docs-pane" data-pane="api">
+      <h3>SoapySDR API (мок)</h3>
+<pre><code>import numpy as np, SoapySDR
+from SoapySDR import SOAPY_SDR_RX, SOAPY_SDR_CF32
+
+sdr = SoapySDR.Device({"driver":"lime", "index":0})  # 0 = SDR-X, 1 = SDR-Y
+sdr.setSampleRate(SOAPY_SDR_RX, 0, 200e3)
+sdr.setFrequency(SOAPY_SDR_RX, 0, 2.6e9)
+sdr.setGain(SOAPY_SDR_RX, 0, 'LNA', 25)
+sdr.setAntenna(SOAPY_SDR_RX, 0, 'LNAH')
+
+st = sdr.setupStream(SOAPY_SDR_RX, SOAPY_SDR_CF32, [0, 1])  # обе антенны
+sdr.activateStream(st)
+mtu = sdr.getStreamMTU(st)
+b0 = np.zeros(mtu, np.complex64); b1 = np.zeros(mtu, np.complex64)
+sdr.readStream(st, [b0, b1], mtu)
+sdr.deactivateStream(st); sdr.closeStream(st)</code></pre>
+      <p>Дополнительно: чтобы прочитать выданный судьёй код прямо из Python:
+      <code>from js import simulator; simulator.judgeCode</code>.</p>
+    </div>
+
+    <div class="docs-pane" data-pane="src">
+      <h3>Документация турнира</h3>
+      <ul>
+        <li><a href="Регламент_внутренний_тур_апрель_2025.pdf">Регламент Радиофест-2025 (PDF)</a></li>
+        <li><a href="lab2.pdf">Lab 2 — Intro to SDR &amp; GNU Radio (PDF, BCIT)</a></li>
+        <li><a href="Основы%20работы%20с%20gnuradio.pdf">Основы GNU Radio (PDF)</a></li>
+        <li><a href="туториал1_1.docx">Туториал 1 — LimeSDR + Python (DOCX)</a></li>
+        <li><a href="https://github.com/blessblissmari/radiofestmironovartem">Репозиторий проекта</a></li>
+      </ul>
+      <p class="muted">Все радиосигналы на этом стенде — <b>синтетические</b>, в эфир ничего не излучается.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  МИЭТ · Радиофест-2025 · сделано для тренировок команд ·
+  <a href="https://github.com/blessblissmari/radiofestmironovartem">github</a>
+</footer>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
